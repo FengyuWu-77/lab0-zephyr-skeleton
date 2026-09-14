@@ -1,0 +1,21 @@
+menu "Sum exercise"
+
+choice SUM_IMPLEMENTATION
+    prompt "Select sum implementation"
+    default SUM_PRINT
+
+config SUM_PRINT
+    bool "Use printk() implementation"
+    help
+      Build the sum implementation that prints with printk().
+
+config SUM_LOG
+    bool "Use Logger implementation"
+    help
+      Build the sum implementation that uses Zephyr Logger.
+
+endchoice
+
+endmenu
+
+source "Kconfig.zephyr"

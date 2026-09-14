@@ -107,6 +107,55 @@ This avoids modifying the installed Zephyr/NCS source tree and makes the
 configuration reproducible when the application is built on another machine or
 with a different SDK installation.
 
+## 6. Printing vs. Logging
+
+This section implements the same two-integer sum through two build-time-selected
+paths:
+
+- `CONFIG_SUM_PRINT` builds `sum_printk/` and reports the result with `printk()`.
+- `CONFIG_SUM_LOG` builds `sum_log/` and reports the result with Zephyr Logger.
+
+The `sum_log/` implementation also emits an INFO-level hexdump of the two input
+integers. The active implementation is selected by the Kconfig choice, while
+`CMakeLists.txt` conditionally compiles only the selected source directory.
+
+### Console evidence
+
+The `printk` build produced the expected result:
+
+```text
+printk: 7 + 5 = 12
+```
+
+![printk console output](section6-printk-console.png)
+
+The Logger build produced an INFO-level result and a hexdump of the inputs:
+
+```text
+Logger: 7 + 5 = 12
+sum inputs
+07 00 00 00 05 00 00 00
+```
+
+![Logger console output](section6-logger-console.png)
+
+### Discussion
+
+| Topic | `printk()` | Logger |
+|---|---|---|
+| Performance | Synchronous output can block while characters are transmitted. | Deferred logging can reduce application blocking by buffering messages for later processing. |
+| Flexibility | Simple console output with limited filtering and backend support. | Supports severity levels, filtering, multiple backends, timestamps, and hexdumps. |
+
+Sourcing `Kconfig.zephyr` is necessary because it includes Zephyr's base Kconfig
+configuration and dependency tree. Without it, the application's Kconfig file
+would not be integrated with the standard Zephyr symbols and build configuration.
+
+Deferred logging can be more suitable for embedded systems because application
+code does not have to wait for every output byte to be transmitted. This can
+improve timing and reduce blocking in time-sensitive code. The tradeoff is that
+the Logger requires buffering resources and messages may be emitted later than
+the code that generated them.
+
 ## Environment Baseline
 
 | Item             | Value                               |

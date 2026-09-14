@@ -8,6 +8,12 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 
+#if defined(CONFIG_SUM_PRINT)
+#include "sum_printk.h"
+#elif defined(CONFIG_SUM_LOG)
+#include "sum_log.h"
+#endif
+
 /* 2000 msec = 2 sec */
 #define SLEEP_TIME_MS   2000
 
@@ -42,6 +48,12 @@ int main(void)
 	if (ret < 0) {
 		return 0;
 	}
+
+#if defined(CONFIG_SUM_PRINT)
+	(void)sum_printk(7, 5);
+#elif defined(CONFIG_SUM_LOG)
+	(void)sum_log(7, 5);
+#endif
 
 	while (1) {
 		int button_state = gpio_pin_get_dt(&button);
