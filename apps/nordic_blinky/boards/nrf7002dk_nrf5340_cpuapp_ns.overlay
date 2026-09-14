@@ -1,7 +1,12 @@
 /delete-node/ &boot_partition;
 /delete-node/ &slot0_partition;
 /delete-node/ &slot1_partition;
-
+/ {
+    aliases {
+        led5180 = &led1;
+        button5180 = &button0;
+    };
+};
 &flash0 {
     partitions {
         slot0_partition: partition@0 {

@@ -45,6 +45,76 @@ The generated image was flashed with the J-Link runner.
 - `-DBOARD_ROOT`: specifies the directory containing application-specific board files.
 - `--runner jlink`: selects the J-Link hardware programmer.
 
+## 4. Kconfig
+
+Kconfig is Zephyr's software configuration system. It controls operating-system
+features, drivers, and application-specific settings. Device Tree describes the
+hardware configuration, while Kconfig determines which software features are
+enabled for the build.
+
+### Kconfig questions
+
+1. **What are the levels of log statements?**
+
+   Zephyr's common log levels are error, warning, information, and debug. They
+   represent increasing levels of detail. For example,
+   `CONFIG_LOG_DEFAULT_LEVEL=3` enables the INFO level as the default level.
+2. **What is the difference between `prj.conf` and `menuconfig`?**
+
+   `prj.conf` is the application's text-based Kconfig input. It is easy to save,
+   review, and track in Git. `menuconfig` is an interactive menu that helps the
+   developer browse, enable, disable, and modify Kconfig options and their
+   dependencies.
+3. **How do you check that the symbols in `prj.conf` are set after building, and why?**
+
+   After building, inspect the generated `.config` file in the build directory,
+   such as `build/zephyr/.config`. This file contains the final resolved values
+   after the application configuration, board defaults, Zephyr defaults, and
+   Kconfig dependencies have been processed. Checking it confirms that the
+   intended settings were actually applied and that no unexpected dependency or
+   override changed the result.
+
+## 5. Device Tree
+
+Device Tree describes the hardware available to the application, including GPIO
+controllers, LEDs, buttons, and their connections. The application accesses
+these descriptions through generated macros instead of hard-coding GPIO numbers
+in C code.
+
+### LED and button aliases
+
+The nRF7002 DK board defines its second LED as the Device Tree node `led1` and
+its first button as `button0`. The application overlay creates project-specific
+aliases for these nodes:
+
+```dts
+/ {
+    aliases {
+        led5180 = &led1;
+        button5180 = &button0;
+    };
+};
+```
+
+The application accesses the aliases with `DT_ALIAS()` and obtains GPIO
+specifications with `GPIO_DT_SPEC_GET()`. The LED is configured as an output,
+the button is configured as an input, and the application polls the button. On
+each new button press, the LED state is toggled.
+
+An overlay is used instead of editing the upstream board `.dts` file because it
+keeps application-specific hardware changes inside the application repository.
+This avoids modifying the installed Zephyr/NCS source tree and makes the
+configuration reproducible when the application is built on another machine or
+with a different SDK installation.
+
+cd "/Users/ericcc/Desktop/ESE-5180/lab0-zephyr-skeleton"
+
+git add apps/nordic_blinky readme.md
+
+git commit -m "feat: add device tree LED and button control"
+
+git push
+
 ## Environment Baseline
 
 | Item             | Value                               |
