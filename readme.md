@@ -107,14 +107,6 @@ This avoids modifying the installed Zephyr/NCS source tree and makes the
 configuration reproducible when the application is built on another machine or
 with a different SDK installation.
 
-cd "/Users/ericcc/Desktop/ESE-5180/lab0-zephyr-skeleton"
-
-git add apps/nordic_blinky readme.md
-
-git commit -m "feat: add device tree LED and button control"
-
-git push
-
 ## Environment Baseline
 
 | Item             | Value                               |
