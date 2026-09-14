@@ -206,6 +206,86 @@ application to initialize Zephyr and run the registered test cases automatically
 | `west build` | Builds one explicitly selected test application for one board. | Use when debugging a single test build or inspecting generated files. |
 | `west twister` | Discovers test cases from `testcase.yaml`, builds them for selected platforms, runs them when supported, and reports results. | Use for automated test execution, multiple tests, or multiple platforms. |
 
+## 8. Adding a Peripheral (BME280)
+
+The BME280 is connected to the nRF7002 DK through I²C1. Following the lab
+hardware table, the connections are `VCC -> VDD`, `GND -> GND`, `SDA -> P1.15`,
+and `SCL -> P1.14`. The BME280 uses its default I²C address `0x77`.
+
+### Device Tree and Kconfig
+
+The application enables the sensor and I²C subsystems in `prj.conf`:
+
+```conf
+CONFIG_SENSOR=y
+CONFIG_I2C=y
+```
+
+The application overlay enables `i2c1`, creates the `bme280_lab` node with
+`compatible = "i2c-device"` and `reg = <0x77>`, and overrides the board's
+default I²C pins with `SDA=P1.15` and `SCL=P1.14`.
+
+Because this application uses the non-secure nRF5340 target, TF-M's default
+secure UART configuration also had to be disabled. TF-M UART1 shares a
+peripheral ID with TWIM1, so leaving the secure UART enabled caused a BusFault
+when the non-secure application initialized I²C1:
+
+```conf
+CONFIG_TFM_SECURE_UART=n
+CONFIG_TFM_LOG_LEVEL_SILENCE=y
+```
+
+### 8.1 Direct BME280 temperature read
+
+The lab asks for direct register access instead of Zephyr's plug-and-play BME280
+driver. The application obtains the bus with `I2C_DT_SPEC_GET(DT_NODELABEL(bme280_lab))`,
+reads the temperature calibration values from registers `0x88` through `0x8D`,
+writes `0x27` to `CTRL_MEAS` at register `0xF4`, and reads the raw temperature
+value from `TEMP_MSB` at `0xFA`. The Bosch integer compensation formula converts
+the raw value into degrees Celsius with hundredths-of-a-degree precision.
+
+The firmware logs a new temperature approximately every two seconds. The
+hardware output below shows continuous readings between approximately
+`24.12 °C` and `24.92 °C`:
+
+```text
+[00:00:16.566,833] <inf> lab0_bme280: BME280 temperature: 24.17 C
+[00:00:18.577,239] <inf> lab0_bme280: BME280 temperature: 24.15 C
+[00:00:24.608,459] <inf> lab0_bme280: BME280 temperature: 25.08 C
+[00:00:30.639,678] <inf> lab0_bme280: BME280 temperature: 24.90 C
+[00:00:48.721,893] <inf> lab0_bme280: BME280 temperature: 24.36 C
+```
+
+![BME280 temperature output](section8-bme280-temperature.png)
+
+### 8.2 Device Tree sanity test
+
+The `apps/nordic_blinky/tests/BME280_DT_TEST/` test is intentionally
+hardware-independent. Its QEMU-only overlay provides a virtual I²C controller
+and a BME280-compatible `i2c-device` node, allowing the test to check the
+Device Tree structure without accessing a physical sensor. The three Ztest
+cases verify that the node exists, is enabled, and has the expected address
+`0x77`.
+
+The test was run with:
+
+```bash
+west twister \
+  -T apps/nordic_blinky/tests/BME280_DT_TEST \
+  -p qemu_cortex_m3 \
+  --inline-logs -v \
+  -O /tmp/ese5180-lab0-twister-bme280
+```
+
+The result was one passing test configuration and three passing test cases:
+
+```text
+1 of 1 executed test configurations passed (100.00%)
+3 of 3 executed test cases passed (100.00%)
+```
+
+![BME280 Device Tree Ztest output](section8-bme280-ztest.png)
+
 ## Environment Baseline
 
 | Item             | Value                               |

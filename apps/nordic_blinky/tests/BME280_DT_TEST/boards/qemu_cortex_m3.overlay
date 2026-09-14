@@ -1,0 +1,16 @@
+/ {
+	/* A virtual I2C controller for a hardware-independent DT sanity test. */
+	i2c1_test: i2c@0 {
+		compatible = "zephyr,i2c-emul-controller";
+		status = "okay";
+		reg = <0x0 0x1000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		bme280_lab: bme280@77 {
+			compatible = "i2c-device";
+			status = "okay";
+			reg = <0x77>;
+		};
+	};
+};

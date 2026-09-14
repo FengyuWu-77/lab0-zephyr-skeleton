@@ -31,3 +31,32 @@
         };
     };
 };
+/* BME280 on I2C1: SDA=P1.15, SCL=P1.14 */
+&i2c1 {
+    status = "okay";
+    pinctrl-0 = <&i2c1_default>;
+    pinctrl-1 = <&i2c1_sleep>;
+    pinctrl-names = "default", "sleep";
+
+    bme280_lab: bme280@77 {
+        compatible = "i2c-device";
+        status = "okay";
+        reg = <0x77>;
+    };
+};
+
+/* Override the board default pins for this lab */
+&i2c1_default {
+    group1 {
+        psels = <NRF_PSEL(TWIM_SDA, 1, 15)>,
+                <NRF_PSEL(TWIM_SCL, 1, 14)>;
+    };
+};
+
+&i2c1_sleep {
+    group1 {
+        psels = <NRF_PSEL(TWIM_SDA, 1, 15)>,
+                <NRF_PSEL(TWIM_SCL, 1, 14)>;
+        low-power-enable;
+    };
+};
