@@ -156,6 +156,56 @@ improve timing and reduce blocking in time-sensitive code. The tradeoff is that
 the Logger requires buffering resources and messages may be emitted later than
 the code that generated them.
 
+## 7. Ztest for Unit Testing
+
+The test application is located in
+`apps/nordic_blinky/tests/SUM_UNIT_TEST/`. It uses Zephyr's Ztest framework to
+test the existing `sum_log()` implementation with three input classes:
+
+- positive values: `2 + 3 = 5`;
+- negative values: `-2 + -3 = -5`;
+- zero values: `0 + 0 = 0`.
+
+The test configuration enables Ztest, verbose assertion messages, and Logger:
+
+```text
+CONFIG_ZTEST=y
+CONFIG_ZTEST_ASSERT_VERBOSE=2
+CONFIG_LOG=y
+```
+
+The test was run on the QEMU Cortex-M3 simulator with:
+
+```bash
+west twister \
+  -T apps/nordic_blinky/tests/SUM_UNIT_TEST \
+  -p qemu_cortex_m3 \
+  --inline-logs -v
+```
+
+The result was one passing test configuration and three passing test cases:
+
+```text
+1 of 1 executed test configurations passed (100.00%)
+3 of 3 executed test cases passed (100.00%)
+```
+
+![Twister QEMU test output](section7-twister-qemu.png)
+
+### Ztest execution model
+
+The test source does not define a traditional application `main()` function.
+The Ztest framework supplies the test runner entry point, registers the suite
+with `ZTEST_SUITE()`, and invokes each `ZTEST()` case. This allows the same test
+application to initialize Zephyr and run the registered test cases automatically.
+
+### `west twister` versus `west build`
+
+| Command | Purpose | Preferred situation |
+|---|---|---|
+| `west build` | Builds one explicitly selected test application for one board. | Use when debugging a single test build or inspecting generated files. |
+| `west twister` | Discovers test cases from `testcase.yaml`, builds them for selected platforms, runs them when supported, and reports results. | Use for automated test execution, multiple tests, or multiple platforms. |
+
 ## Environment Baseline
 
 | Item             | Value                               |
